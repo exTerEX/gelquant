@@ -1,0 +1,22 @@
+# Runtime requirements
+--requirement requirements.txt
+
+# Testing
+pytest
+
+# Formatter
+autopep8
+
+# Linting
+pylint
+pylint-pytest
+pylint-mccabe
+pydocstyle
+pycodestyle
+
+# Documentation
+sphinx
+
+# Miscellaneous
+ipykernel
+pre-commit
