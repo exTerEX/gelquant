@@ -1,0 +1,22 @@
+{
+    "files.exclude": {
+        "**/.git": true,
+        "**/__init__.py": false
+    },
+    // -- Linter
+    "python.linting.pylintEnabled": true,
+    "python.linting.pylintArgs": [
+        "--rcfile=setup.cfg"
+    ],
+    // -- Docstyle
+    "python.linting.pydocstyleEnabled": true,
+    // -- Codestyle
+    "python.linting.pycodestyleEnabled": true,
+    // -- Formatting
+    "python.formatting.autopep8Args": [
+        "--aggressive",
+        "--experimental"
+    ],
+    // -- Misc
+    "autoDocstring.docstringFormat": "sphinx"
+}
