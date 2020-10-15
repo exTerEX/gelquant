@@ -6,7 +6,9 @@ from decimal import Decimal
 
 # Third Party Python Modules
 from matplotlib import pyplot as plt
+import numpy
 import numpy as np
+import PIL
 from PIL import Image
 import pandas as pd
 from natsort import natsorted, ns
@@ -15,31 +17,37 @@ from scipy.stats import norm
 from scipy.optimize import curve_fit
 
 
-def image_cropping(path, x1, y1, x2, y2):
+def image_cropping(path: str, bbox: tuple, show: bool = False) -> numpy.ndarray:
+    """Crop image in preparation for gel analysis.
 
+    :param path: Path to image that will be cropped.
+    :type path: str
+    :param bbox: A tuple with crop points (x1, y1, x2, y2), where (x1, y1) point to top-leftmost
+        value, while (x2, y2) point to bottom-rightmost value.
+    :type bbox: tuple
+    :param show: Whether or not to show original and cropped images with
+        matplotlib, defaults to False.
+    :type show: bool
+    :return: Cropped image as numpy.ndarray.
+    :rtype: numpy.ndarray
     """
-    Crop image in preparation for gel analysis.
-    x and y values correspond to two points in gel
-    at which cropping will happen - (x1,y1) is the top
-    left point, while (x2,y2) is the bottom right point,
-    thus cropping the image between the two points.
-    """
+    original = PIL.Image.open(path)
+    crop = original.crop(bbox)
 
-    image = Image.open(path)
-    plt.figure(figsize=(7,14))
-    plt.subplot(121)
-    plt.imshow(image)
-    plt.title("original image")
+    if show:
+        plt.figure(figsize=(7, 14))
+        plt.subplot(121)
+        plt.imshow(original)
+        plt.title("original image")
 
-    image2 = image.crop((x1, y1, x2, y2))
-    plt.subplot(122)
-    plt.imshow(image2)
-    plt.title("cropped image")
+        plt.subplot(122)
+        plt.imshow(crop)
+        plt.title("cropped image")
 
-    plt.tight_layout()
-    plt.show()
+        plt.tight_layout()
+        plt.show()
 
-    return image2
+    return numpy.array(crop)
 
 def lane_parser(img, lanes, groups, baseline1, baseline2, tolerance=0.1, plot_output=False):
 
