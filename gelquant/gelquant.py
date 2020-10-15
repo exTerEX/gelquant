@@ -1,14 +1,18 @@
+"""Source code for Gelquant."""
+
+# Standard Python Modules
+import shutil
+from decimal import Decimal
+
+# Third Party Python Modules
 from matplotlib import pyplot as plt
 import numpy as np
 from PIL import Image
 import pandas as pd
-import os
-import shutil
 from natsort import natsorted, ns
 from scipy.integrate import trapz
 from scipy.stats import norm
 from scipy.optimize import curve_fit
-from decimal import Decimal
 
 
 def image_cropping(path, x1, y1, x2, y2):
