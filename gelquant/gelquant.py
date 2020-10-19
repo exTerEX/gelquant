@@ -9,9 +9,7 @@ from matplotlib import pyplot as plt
 import numpy
 import numpy as np
 import PIL
-from PIL import Image
 import pandas as pd
-from natsort import natsorted, ns
 from scipy.integrate import trapz
 from scipy.stats import norm
 from scipy.optimize import curve_fit
@@ -49,64 +47,70 @@ def image_cropping(path: str, bbox: tuple, show: bool = False) -> numpy.ndarray:
 
     return numpy.array(crop)
 
-def lane_parser(img, lanes, groups, baseline1, baseline2, tolerance=0.1, plot_output=False):
 
-    if "tmp" not in os.listdir():
-        os.mkdir("tmp")
+def lane_parser(img: numpy.ndarray, lanes: int, groups: int, baseline: list,
+                tolerance: float = 0.1, show: bool = False) -> list:
+    """[summary]
 
-    image_array = np.array(img)
+    :param img: Image of gel with lanes and protein bands to be analysed
+    :type img: numpy.ndarray
+    :param lanes: Amount of lanes in image
+    :type lanes: int
+    :param groups: Amount of different proteins
+    :type groups: int
+    :param baseline: y-value of protein lane.
+    :type baseline: list
+    :param tolerance: [description], defaults to 0.1
+    :type tolerance: float, optional
+    :param show: [description], defaults to False
+    :type show: bool, optional
+    :return: [description]
+    :rtype: list
+    """
+    baseline1, baseline2 = baseline
 
-    lane_list = np.arange(lanes)
-
-    for i in range(len(lane_list)):
-        image_slice = img.crop((len(image_array[0])*i/lanes, 0,
-                         len(image_array[0])*(i+1)/lanes, len(image_array)))
-        image_slice.save("tmp/lane-" + str(lane_list[i]+1) + ".png","PNG")
-
-    image_list = []
-
-    for i in sorted(os.listdir("tmp")):
-        if ".png" in i:
-            image_list.append(i)
-
-    image_list = natsorted(image_list, key=lambda y: y.lower())
+    # TODO: Work with map(...)
+    image_list = [
+        img[:len(img), int(len(img[0]) * index / lanes):int(len(img[0]) * (index + 1) / lanes)]
+        for index in range(lanes)]
 
     final_data = []
 
-    for i in range(len(image_list)):
-
-        data = np.array(Image.open("tmp/" + image_list[i]))
+    for i, element1 in enumerate(image_list):
 
         all_intensities = []
 
-        for j in range(len(data)):
+        for j in range(len(element1)):
             row_intensities = []
-            for k in range(len(data[0])):
-                pixel = data[j,k]
-                intensity = 1-(0.2126*pixel[0]/255 + 0.7152*pixel[1]/255 + 0.0722*pixel[2]/255)
+            for k in range(len(element1[0])):
+                pixel = element1[j, k]
+                intensity = 1 - (0.2126 * pixel[0] / 255 + 0.7152 *
+                                 pixel[1] / 255 + 0.0722 * pixel[2] / 255)
                 row_intensities.append(intensity)
             all_intensities.append(row_intensities)
 
         final_intensities = []
 
-        for i in range(len(all_intensities)):
-            x = np.linspace(norm.ppf(0.01), norm.ppf(0.99), len(all_intensities[i]))
+        for k, element2 in enumerate(all_intensities):
+            x = numpy.linspace(norm.ppf(0.01), norm.ppf(
+                0.99), len(element2))
             weights = norm.pdf(x)
-            ave_intensity = np.average(all_intensities[i], weights=weights*sum(weights))
+            ave_intensity = numpy.average(
+                element2, weights=weights * sum(weights))
             final_intensities.append(ave_intensity)
 
-        final_intensities = np.array(final_intensities) - np.mean(final_intensities[baseline1:baseline2])
+        final_intensities = numpy.array(
+            final_intensities) - numpy.mean(final_intensities[baseline1:baseline2])
 
         final_data.append(final_intensities)
 
-    peakzero_xs = []
-    peakzero_ys = []
+    peakzero_xs, peakzero_ys = [], []
 
     for i in range(groups):
-        initial_peak = max(final_data[int(i*len(final_data)/groups)])
+        initial_peak = max(final_data[int(i * len(final_data) / groups)])
         peakzero_ys.append(initial_peak)
-        for j in range(len(final_data[int(i*len(final_data)/groups)])):
-            if initial_peak == final_data[int(i*len(final_data)/groups)][j]:
+        for j in range(len(final_data[int(i * len(final_data) / groups)])):
+            if initial_peak == final_data[int(i * len(final_data) / groups)][j]:
                 peakzero_xs.append(j)
 
     all_bounds = []
@@ -117,30 +121,26 @@ def lane_parser(img, lanes, groups, baseline1, baseline2, tolerance=0.1, plot_ou
         bounds = []
 
         for j in range(len(final_data[0])):
-            if final_data[int(i*len(final_data)/groups)][j] < tolerance*peak:
+            if final_data[int(i * len(final_data) / groups)][j] < tolerance * peak:
                 continue
-            if final_data[int(i*len(final_data)/groups)][j] > tolerance*peak:
+            if final_data[int(i * len(final_data) / groups)][j] > tolerance * peak:
                 bounds.append(j)
 
-        lower_bound = bounds[0]
-        upper_bound = bounds[-1]
+        lower_bound, upper_bound = bounds[0], bounds[-1]
 
-        for k in range(int(len(final_data)/groups)):
+        for k in range(int(len(final_data) / groups)):
             all_bounds.append([lower_bound, upper_bound])
 
-    if plot_output == True:
-
-        for i in range(len(final_data)):
-            plt.plot(np.arange(len(final_data[i])), final_data[i], "-")
-            plt.plot([all_bounds[0],all_bounds[0]], [-0.1, 0.7], "--", color="green")
-            plt.plot([all_bounds[1],all_bounds[1]], [-0.1, 0.7], "--", color="green")
+    if show:
+        for i, element in enumerate(final_data):
+            plt.plot(numpy.arange(len(element)), element, "-")
+            plt.plot([all_bounds[0], all_bounds[0]], [-0.1, 0.7], "--", color="green")
+            plt.plot([all_bounds[1], all_bounds[1]], [-0.1, 0.7], "--", color="green")
             plt.ylim(-0.1, 0.7)
             plt.show()
 
-    shutil.rmtree("tmp/", ignore_errors=True)
-
-
     return final_data, all_bounds[0]
+
 
 def area_integrator(data, bounds, groups, plot_output=False, percentages=True):
 
@@ -331,3 +331,4 @@ def fancy_plotter(dataset, ks, errs, colors, output, ylim=None, ylabel=None, log
     plt.ylabel(ylabel)
     f.savefig(output, bbox_inches = "tight", dpi=1000)
     None
+
