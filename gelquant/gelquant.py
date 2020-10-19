@@ -253,25 +253,6 @@ def summary_data(datasets, timepoints="", output="", p0=[7, 0.2], input_df = Fal
 
     return popt, perr
 
-def half_life_calculator(ks, errs):
-
-    ts = []
-    t_errs = []
-
-    for i in range(len(ks)):
-        t = (0.693/ks[i])
-        ts.append(t)
-
-    for i in range(len(errs)):
-        d = np.sqrt(((0.693/ks[i]**2)**2)*(errs[i]**2))
-        t_errs.append(d)
-
-    ts = np.array([ts])
-    ts = ts.flatten()
-    t_errs = np.array([t_errs])
-    t_errs = t_errs.flatten()
-
-    return ts, t_errs
 
 def aggregator(df_list, column=-1):
 
