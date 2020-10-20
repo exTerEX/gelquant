@@ -254,43 +254,8 @@ def summary_data(datasets, timepoints="", output="", p0=[7, 0.2], input_df = Fal
     return popt, perr
 
 
-def aggregator(df_list, column=-1):
-
-    means = []
-    errors = []
-
-    for i in range(len(df_list)):
-
-        mean = np.mean(df_list[i][df_list[i].columns[column]])
-        stderr = np.std(df_list[i][df_list[i].columns[column]])/np.sqrt(len(df_list[i][df_list[i].columns[column]]))
-        means.append(mean)
-        stderrors.append(stderr)
-
-    return means, stderrors
-
-def aggregate_plotter(data, errors, labels, colorlist, y_pos, ylabel, xlabel, figname, savefig=False):
-
-    df = pd.DataFrame({"data":data, "errors":errors})
-    df['labels'] = labelsm63f_hd
-    df['colors'] = colorlist
-
-    plt.figure(figsize=(6,4))
-    plt.bar(y_pos, df.data, color=df.colors, align='center', yerr=df.errors, width=0.75)
-    plt.xticks(range(len()))
-    plt.yticks(fontsize=16)
-    plt.ylabel(ylabel, fontsize=20)
-    plt.xlabel(xlabel, fontsize=20)
-    plt.ylim(0,105)
-    plt.tight_layout()
-
-    if savefig == True:
-        plt.savefig(figname, dpi=300)
-
-    None
-
-    return df
-
-def fancy_plotter(dataset, ks, errs, colors, output, ylim=None, ylabel=None, log=True, labeling=True):
+def fancy_plotter(dataset, ks, errs, colors, output, ylim=None,
+                  ylabel=None, log=True, labeling=True):
 
     f, ax = plt.subplots(1, 1, figsize=(len(dataset)/1.6,5))
 
@@ -312,4 +277,3 @@ def fancy_plotter(dataset, ks, errs, colors, output, ylim=None, ylabel=None, log
     plt.ylabel(ylabel)
     f.savefig(output, bbox_inches = "tight", dpi=1000)
     None
-
