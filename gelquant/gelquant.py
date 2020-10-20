@@ -2,12 +2,13 @@
 
 # Standard Python Modules
 from decimal import Decimal
+import itertools
 
 # Third Party Python Modules
 import matplotlib.pyplot as plt
 import numpy
 import PIL
-import pandas as pd
+import pandas
 from scipy.integrate import trapz
 from scipy.stats import norm
 from scipy.optimize import curve_fit
@@ -46,6 +47,28 @@ def image_cropping(path: str, bbox: tuple, show: bool = False) -> numpy.ndarray:
     return numpy.array(crop)
 
 
+# TODO: Move to utils.py
+def crop_to_lane(obj: numpy.ndarray, lane: int, lanes: int) -> numpy.ndarray:
+    """Crop a numpy.ndarray to selected lane.
+
+    :param obj: Array to be cropped
+    :type obj: numpy.ndarray
+    :param lane: Selected lane
+    :type lane: int
+    :param lanes: Total lanes
+    :type lanes: int
+    :return: Return the cropped object representing lane data
+    :rtype: numpy.ndarray
+    """
+    x_1 = int(len(obj[0]) * lane / lanes)
+    x_2 = int(len(obj[0]) * (lane + 1) / lanes)
+
+    y_1 = 0
+    y_2 = len(obj)
+
+    return obj[y_1:y_2, x_1:x_2]
+
+
 def lane_parser(img: numpy.ndarray, lanes: int, groups: int, baseline: list,
                 tolerance: float = 0.1, show: bool = False) -> list:
     """[summary]
@@ -67,10 +90,7 @@ def lane_parser(img: numpy.ndarray, lanes: int, groups: int, baseline: list,
     """
     baseline1, baseline2 = baseline
 
-    # TODO: Work with map(...)
-    image_list = [
-        img[:len(img), int(len(img[0]) * index / lanes):int(len(img[0]) * (index + 1) / lanes)]
-        for index in range(lanes)]
+    image_list = map(crop_to_lane, itertools.repeat(img), range(lanes), itertools.repeat(lanes))
 
     final_data = []
 
@@ -213,8 +233,8 @@ def summary_data(datasets, timepoints="", output="", p0=[7, 0.2], input_df = Fal
     plt.rcParams["font.family"] = "Times New Roman"
 
     if input_df == True:
-        if type(datasets) != pd.core.frame.DataFrame:
-            df = pd.read_json(datasets)
+        if type(datasets) != pandas.core.frame.DataFrame:
+            df = pandas.read_json(datasets)
             plt.title(datasets.split(".")[0])
             df.to_json(output + ".json")
         else:
@@ -226,7 +246,7 @@ def summary_data(datasets, timepoints="", output="", p0=[7, 0.2], input_df = Fal
         data = numpy.array(datasets).flatten()
         time = list(timepoints)*int((len(data)/len(timepoints)))
         time = [int(i) for i in time]
-        df = pd.DataFrame({"timepoint":time, "value":data})
+        df = pandas.DataFrame({"timepoint":time, "value":data})
         df.to_json(output + ".json")
 
     def decay(x, a, k):
