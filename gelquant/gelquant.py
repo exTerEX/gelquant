@@ -1,13 +1,11 @@
 """Source code for Gelquant."""
 
 # Standard Python Modules
-import shutil
 from decimal import Decimal
 
 # Third Party Python Modules
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 import numpy
-import numpy as np
 import PIL
 import pandas as pd
 from scipy.integrate import trapz
@@ -159,7 +157,7 @@ def area_integrator(data, bounds, groups, plot_output=False, percentages=True):
         m = (y2-y1)/(x2-x1)
         b = y1-m*x1
 
-        baseline_x = np.arange(len(data[i][bounds[0]:bounds[1]]))
+        baseline_x = numpy.arange(len(data[i][bounds[0]:bounds[1]]))
         baseline_x = baseline_x + bounds[0]
 
         baseline_y = []
@@ -174,7 +172,7 @@ def area_integrator(data, bounds, groups, plot_output=False, percentages=True):
     if plot_output == True:
 
         for i in range(len(data)):
-            plt.plot(np.arange(len(data[i])), data[i], "-")
+            plt.plot(numpy.arange(len(data[i])), data[i], "-")
             plt.plot([bounds[0],bounds[0]], [-0.1, 0.7], "--", color="green")
             plt.plot([bounds[1],bounds[1]], [-0.1, 0.7], "--", color="green")
             plt.plot(baseline_xs[i], baseline_ys[i], "--", color="green")
@@ -225,22 +223,22 @@ def summary_data(datasets, timepoints="", output="", p0=[7, 0.2], input_df = Fal
 
     else:
 
-        data = np.array(datasets).flatten()
+        data = numpy.array(datasets).flatten()
         time = list(timepoints)*int((len(data)/len(timepoints)))
         time = [int(i) for i in time]
         df = pd.DataFrame({"timepoint":time, "value":data})
         df.to_json(output + ".json")
 
     def decay(x, a, k):
-        return a * np.exp(-k * x)
+        return a * numpy.exp(-k * x)
 
     popt, pcov = curve_fit(decay, df.timepoint, df.value, p0=p0)
-    perr = np.sqrt(np.diag(pcov))
+    perr = numpy.sqrt(numpy.diag(pcov))
 
     plt.plot(df.timepoint,df.value, ".")
     plt.ylabel("Normalized \n pixel intensity", fontsize=10)
     plt.xlabel("Time (minutes)", fontsize=10)
-    x_decay = np.linspace(0,1000,1000)
+    x_decay = numpy.linspace(0,1000,1000)
     plt.xlim(-1, max(df.timepoint)+5)
     plt.ylim(0,)
     plt.text(0.5,0.5,"k = " + f"{Decimal(str(popt[1])):.2E}" + "\n" + r' $\pm$ ' + f"{Decimal(str(perr[1])):.2E}" + r' min$^{-1}$', fontsize=10)
@@ -254,26 +252,30 @@ def summary_data(datasets, timepoints="", output="", p0=[7, 0.2], input_df = Fal
     return popt, perr
 
 
-def fancy_plotter(dataset, ks, errs, colors, output, ylim=None,
+def fancy_plotter(dataset, ks, errs, colors, path: str = None, ylim=None,
                   ylabel=None, log=True, labeling=True):
 
-    f, ax = plt.subplots(1, 1, figsize=(len(dataset)/1.6,5))
+    fig, ax = plt.subplots(1, 1, figsize=(len(dataset) / 1.6, 5))
 
-    ax.bar(np.arange(len(ks)), ks, yerr=[np.zeros(len(errs)), errs], color=colors,
+    ax.bar(numpy.arange(len(ks)), ks, yerr=[numpy.zeros(len(errs)), errs], color=colors,
            edgecolor="black", capsize=7)
 
     labels = [i.split(".")[0] for i in dataset]
 
-    if log == True:
+    if log:
         ax.set_yscale('log')
+
     ax.set_ylim(ylim)
 
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
-    if labeling==True:
+
+    if labeling:
         plt.xticks(range(len(ks)), labels, rotation=90, fontsize=20)
     else:
         plt.xticks(range(len(ks)), "", rotation=90, fontsize=20)
+
     plt.ylabel(ylabel)
-    f.savefig(output, bbox_inches = "tight", dpi=1000)
-    None
+
+    if path is not None:
+        fig.savefig(path, bbox_inches="tight", dpi=1000)
