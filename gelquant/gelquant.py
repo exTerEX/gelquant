@@ -5,13 +5,13 @@ from decimal import Decimal
 import itertools
 
 # Third Party Python Modules
-import matplotlib.pyplot as plt
+import matplotlib.pyplot
 import numpy
-import PIL
+import PIL.Image
 import pandas
-from scipy.integrate import trapz
-from scipy.stats import norm
-from scipy.optimize import curve_fit
+import scipy
+import scipy.stats
+import scipy.integrate
 
 
 def image_cropping(path: str, bbox: tuple, show: bool = False) -> numpy.ndarray:
@@ -25,24 +25,24 @@ def image_cropping(path: str, bbox: tuple, show: bool = False) -> numpy.ndarray:
     :param show: Whether or not to show original and cropped images with
         matplotlib, defaults to False.
     :type show: bool
-    :return: Cropped image as numpy.ndarray.
+    :return: Cropped image as numpy.ndarray
     :rtype: numpy.ndarray
     """
     original = PIL.Image.open(path)
     crop = original.crop(bbox)
 
     if show:
-        plt.figure(figsize=(7, 14))
-        plt.subplot(121)
-        plt.imshow(original)
-        plt.title("original image")
+        matplotlib.pyplot.figure(figsize=(7, 14))
+        matplotlib.pyplot.subplot(121)
+        matplotlib.pyplot.imshow(original)
+        matplotlib.pyplot.title("original image")
 
-        plt.subplot(122)
-        plt.imshow(crop)
-        plt.title("cropped image")
+        matplotlib.pyplot.subplot(122)
+        matplotlib.pyplot.imshow(crop)
+        matplotlib.pyplot.title("cropped image")
 
-        plt.tight_layout()
-        plt.show()
+        matplotlib.pyplot.tight_layout()
+        matplotlib.pyplot.show()
 
     return numpy.array(crop)
 
@@ -69,9 +69,21 @@ def crop_to_lane(obj: numpy.ndarray, lane: int, lanes: int) -> numpy.ndarray:
     return obj[y_1:y_2, x_1:x_2]
 
 
+# TODO: Move to utils.py
+def calculate_intensities(obj: numpy.ndarray) -> numpy.float64:
+    """Calculate the intensity of pixel value.
+
+    :param obj: Pixel value
+    :type obj: numpy.ndarray
+    :return: Intensity value
+    :rtype: numpy.float64
+    """
+    return 1 - (0.2126 * obj[0] / 255 + 0.7152 * obj[1] / 255 + 0.0722 * obj[2] / 255)
+
+
 def lane_parser(img: numpy.ndarray, lanes: int, groups: int, baseline: list,
                 tolerance: float = 0.1, show: bool = False) -> list:
-    """[summary]
+    """Gel images are parsed and each lane is converted into an array of pixel intensity.
 
     :param img: Image of gel with lanes and protein bands to be analysed
     :type img: numpy.ndarray
@@ -94,25 +106,16 @@ def lane_parser(img: numpy.ndarray, lanes: int, groups: int, baseline: list,
 
     final_data = []
 
-    for i, element1 in enumerate(image_list):
+    for i, element in enumerate(image_list):
 
-        all_intensities = []
-
-        for j in range(len(element1)):
-            row_intensities = []
-            for k in range(len(element1[0])):
-                pixel = element1[j, k]
-                intensity = 1 - (0.2126 * pixel[0] / 255 + 0.7152 *
-                                 pixel[1] / 255 + 0.0722 * pixel[2] / 255)
-                row_intensities.append(intensity)
-            all_intensities.append(row_intensities)
+        all_intensities = [list(map(calculate_intensities, pixel)) for pixel in element]
 
         final_intensities = []
 
-        for k, element2 in enumerate(all_intensities):
-            x = numpy.linspace(norm.ppf(0.01), norm.ppf(
+        for element2 in all_intensities:
+            x = numpy.linspace(scipy.stats.norm.ppf(0.01), scipy.stats.norm.ppf(
                 0.99), len(element2))
-            weights = norm.pdf(x)
+            weights = scipy.stats.norm.pdf(x)
             ave_intensity = numpy.average(
                 element2, weights=weights * sum(weights))
             final_intensities.append(ave_intensity)
@@ -151,11 +154,11 @@ def lane_parser(img: numpy.ndarray, lanes: int, groups: int, baseline: list,
 
     if show:
         for i, element in enumerate(final_data):
-            plt.plot(numpy.arange(len(element)), element, "-")
-            plt.plot([all_bounds[0], all_bounds[0]], [-0.1, 0.7], "--", color="green")
-            plt.plot([all_bounds[1], all_bounds[1]], [-0.1, 0.7], "--", color="green")
-            plt.ylim(-0.1, 0.7)
-            plt.show()
+            matplotlib.pyplot.plot(numpy.arange(len(element)), element, "-")
+            matplotlib.pyplot.plot([all_bounds[0], all_bounds[0]], [-0.1, 0.7], "--", color="green")
+            matplotlib.pyplot.plot([all_bounds[1], all_bounds[1]], [-0.1, 0.7], "--", color="green")
+            matplotlib.pyplot.ylim(-0.1, 0.7)
+            matplotlib.pyplot.show()
 
     return final_data, all_bounds[0]
 
@@ -192,12 +195,12 @@ def area_integrator(data, bounds, groups, plot_output=False, percentages=True):
     if plot_output == True:
 
         for i in range(len(data)):
-            plt.plot(numpy.arange(len(data[i])), data[i], "-")
-            plt.plot([bounds[0],bounds[0]], [-0.1, 0.7], "--", color="green")
-            plt.plot([bounds[1],bounds[1]], [-0.1, 0.7], "--", color="green")
-            plt.plot(baseline_xs[i], baseline_ys[i], "--", color="green")
-            plt.ylim(-0.1, 0.7)
-            plt.show()
+            matplotlib.pyplot.plot(numpy.arange(len(data[i])), data[i], "-")
+            matplotlib.pyplot.plot([bounds[0],bounds[0]], [-0.1, 0.7], "--", color="green")
+            matplotlib.pyplot.plot([bounds[1],bounds[1]], [-0.1, 0.7], "--", color="green")
+            matplotlib.pyplot.plot(baseline_xs[i], baseline_ys[i], "--", color="green")
+            matplotlib.pyplot.ylim(-0.1, 0.7)
+            matplotlib.pyplot.show()
 
     trunc_data = []
 
@@ -209,7 +212,7 @@ def area_integrator(data, bounds, groups, plot_output=False, percentages=True):
     areas = []
 
     for i in range(len(trunc_data)):
-        area_trapz = trapz(trunc_data[i])
+        area_trapz = scipy.integrate.trapz(trunc_data[i])
         areas.append(area_trapz)
 
     sorted_areas = []
@@ -229,13 +232,13 @@ def area_integrator(data, bounds, groups, plot_output=False, percentages=True):
 
 def summary_data(datasets, timepoints="", output="", p0=[7, 0.2], input_df = False):
 
-    plt.figure(figsize=(2.5,2.5))
-    plt.rcParams["font.family"] = "Times New Roman"
+    matplotlib.pyplot.figure(figsize=(2.5, 2.5))
+    matplotlib.pyplot.rcParams["font.family"] = "Times New Roman"
 
     if input_df == True:
         if type(datasets) != pandas.core.frame.DataFrame:
             df = pandas.read_json(datasets)
-            plt.title(datasets.split(".")[0])
+            matplotlib.pyplot.title(datasets.split(".")[0])
             df.to_json(output + ".json")
         else:
             df = datasets
@@ -252,22 +255,21 @@ def summary_data(datasets, timepoints="", output="", p0=[7, 0.2], input_df = Fal
     def decay(x, a, k):
         return a * numpy.exp(-k * x)
 
-    popt, pcov = curve_fit(decay, df.timepoint, df.value, p0=p0)
+    popt, pcov = scipy.optimize.curve_fit(decay, df.timepoint, df.value, p0=p0)
     perr = numpy.sqrt(numpy.diag(pcov))
 
-    plt.plot(df.timepoint,df.value, ".")
-    plt.ylabel("Normalized \n pixel intensity", fontsize=10)
-    plt.xlabel("Time (minutes)", fontsize=10)
+    matplotlib.pyplot.plot(df.timepoint,df.value, ".")
+    matplotlib.pyplot.ylabel("Normalized \n pixel intensity", fontsize=10)
+    matplotlib.pyplot.xlabel("Time (minutes)", fontsize=10)
     x_decay = numpy.linspace(0,1000,1000)
-    plt.xlim(-1, max(df.timepoint)+5)
-    plt.ylim(0,)
-    plt.text(0.5,0.5,"k = " + f"{Decimal(str(popt[1])):.2E}" + "\n" + r' $\pm$ ' + f"{Decimal(str(perr[1])):.2E}" + r' min$^{-1}$', fontsize=10)
-    plt.plot(x_decay, decay(x_decay, *popt))
+    matplotlib.pyplot.xlim(-1, max(df.timepoint)+5)
+    matplotlib.pyplot.ylim(0,)
+    matplotlib.pyplot.text(0.5,0.5,"k = " + f"{Decimal(str(popt[1])):.2E}" + "\n" + r' $\pm$ ' + f"{Decimal(str(perr[1])):.2E}" + r' min$^{-1}$', fontsize=10)
+    matplotlib.pyplot.plot(x_decay, decay(x_decay, *popt))
 
-    plt.tight_layout()
-    plt.savefig(output + "_decay_curve.svg", dpi=100)
-    plt.show()
-    None
+    matplotlib.pyplot.tight_layout()
+    matplotlib.pyplot.savefig(output + "_decay_curve.svg", dpi=100)
+    matplotlib.pyplot.show()
 
     return popt, perr
 
@@ -275,7 +277,7 @@ def summary_data(datasets, timepoints="", output="", p0=[7, 0.2], input_df = Fal
 def fancy_plotter(dataset, ks, errs, colors, path: str = None, ylim=None,
                   ylabel=None, log=True, labeling=True):
 
-    fig, ax = plt.subplots(1, 1, figsize=(len(dataset) / 1.6, 5))
+    fig, ax = matplotlib.pyplot.subplots(1, 1, figsize=(len(dataset) / 1.6, 5))
 
     ax.bar(numpy.arange(len(ks)), ks, yerr=[numpy.zeros(len(errs)), errs], color=colors,
            edgecolor="black", capsize=7)
@@ -291,11 +293,11 @@ def fancy_plotter(dataset, ks, errs, colors, path: str = None, ylim=None,
     ax.spines["right"].set_visible(False)
 
     if labeling:
-        plt.xticks(range(len(ks)), labels, rotation=90, fontsize=20)
+        matplotlib.pyplot.xticks(range(len(ks)), labels, rotation=90, fontsize=20)
     else:
-        plt.xticks(range(len(ks)), "", rotation=90, fontsize=20)
+        matplotlib.pyplot.xticks(range(len(ks)), "", rotation=90, fontsize=20)
 
-    plt.ylabel(ylabel)
+    matplotlib.pyplot.ylabel(ylabel)
 
     if path is not None:
         fig.savefig(path, bbox_inches="tight", dpi=1000)
