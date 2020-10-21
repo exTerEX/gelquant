@@ -70,7 +70,7 @@ def crop_to_lane(obj: numpy.ndarray, lane: int, lanes: int) -> numpy.ndarray:
 
 
 # TODO: Move to utils.py
-def calculate_intensities(obj: numpy.ndarray) -> numpy.float64:
+def pixel_intensity(pixel: numpy.ndarray) -> numpy.float64:
     """Calculate the intensity of pixel value.
 
     :param obj: Pixel value
@@ -78,7 +78,7 @@ def calculate_intensities(obj: numpy.ndarray) -> numpy.float64:
     :return: Intensity value
     :rtype: numpy.float64
     """
-    return 1 - (0.2126 * obj[0] / 255 + 0.7152 * obj[1] / 255 + 0.0722 * obj[2] / 255)
+    return 1 - (0.2126 * pixel[0] / 255 + 0.7152 * pixel[1] / 255 + 0.0722 * pixel[2] / 255)
 
 
 def lane_parser(img: numpy.ndarray, lanes: int, groups: int, baseline: list,
@@ -100,30 +100,23 @@ def lane_parser(img: numpy.ndarray, lanes: int, groups: int, baseline: list,
     :return: [description]
     :rtype: list
     """
-    baseline1, baseline2 = baseline
-
-    image_list = map(crop_to_lane, itertools.repeat(img), range(lanes), itertools.repeat(lanes))
+    #baseline1, baseline2 = baseline
 
     final_data = []
-
-    for i, element in enumerate(image_list):
-
-        all_intensities = [list(map(calculate_intensities, pixel)) for pixel in element]
-
+    for image in map(crop_to_lane, itertools.repeat(img), range(lanes), itertools.repeat(lanes)):
         final_intensities = []
+        for pixel in image:
+            intensity = list(map(pixel_intensity, pixel))
 
-        for element2 in all_intensities:
-            x = numpy.linspace(scipy.stats.norm.ppf(0.01), scipy.stats.norm.ppf(
-                0.99), len(element2))
-            weights = scipy.stats.norm.pdf(x)
-            ave_intensity = numpy.average(
-                element2, weights=weights * sum(weights))
-            final_intensities.append(ave_intensity)
+            weights = scipy.stats.norm.pdf(numpy.linspace(
+                scipy.stats.norm.ppf(0.01),
+                scipy.stats.norm.ppf(0.99),
+                len(intensity)))
 
-        final_intensities = numpy.array(
-            final_intensities) - numpy.mean(final_intensities[baseline1:baseline2])
+            final_intensities.append(numpy.average(intensity, weights=weights * sum(weights)))
 
-        final_data.append(final_intensities)
+        final_data.append(numpy.array(final_intensities) -
+                          numpy.mean(final_intensities))#[baseline1:baseline2]))
 
     peakzero_xs, peakzero_ys = [], []
 
@@ -239,10 +232,8 @@ def summary_data(datasets, timepoints="", output="", p0=[7, 0.2], input_df = Fal
         if type(datasets) != pandas.core.frame.DataFrame:
             df = pandas.read_json(datasets)
             matplotlib.pyplot.title(datasets.split(".")[0])
-            df.to_json(output + ".json")
         else:
             df = datasets
-            df.to_json (output + ".json")
 
     else:
 
