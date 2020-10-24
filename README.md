@@ -10,7 +10,7 @@ Simple band quantification software for protein and DNA gels/blots. Takes an inp
 
 ### Prerequisites
 
-All provided installation methods in [Installation](###installation) rely on ```pip```. If you want to clone/pull directly from Github you also need ```git```.
+All provided installation methods in [Installation](#installation) rely on ```pip```. If you want to clone/pull directly from Github you also need ```git```.
 
 Project dependencies: ```matplotlib, numpy, PIL, pandas, scipy```
 
