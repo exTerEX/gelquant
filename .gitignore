@@ -1,12 +1,16 @@
-output/
-
-### Code ###
+### Visual Studio Code
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+# Project workspaces
 *.code-workspace
+
+# Local history for Visual Studio Code
+.history/
+
 
 ### Notebooks ###
 .ipynb_checkpoints
@@ -145,3 +149,6 @@ dmypy.json
 
 # profiling data
 .prof
+
+# Project specific
+output/
