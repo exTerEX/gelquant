@@ -14,7 +14,10 @@ import scipy.stats
 import scipy.integrate
 
 
-def image_cropping(path: str, bbox: tuple, show: bool = False) -> numpy.ndarray:
+def image_cropping(
+        path: str,
+        bbox: tuple,
+        show: bool = False) -> numpy.ndarray:
     """Crop image in preparation for gel analysis.
 
     :param path: Path to image that will be cropped.
@@ -76,7 +79,8 @@ def pixel_intensity(pixel: numpy.ndarray) -> numpy.float64:
     :return: Intensity value
     :rtype: numpy.float64
     """
-    return 1 - (0.2126 * pixel[0] / 255 + 0.7152 * pixel[1] / 255 + 0.0722 * pixel[2] / 255)
+    return 1 - (0.2126 * pixel[0] / 255 + 0.7152 *
+                pixel[1] / 255 + 0.0722 * pixel[2] / 255)
 
 
 def lane_parser(img: numpy.ndarray, lanes: int, groups: int,
@@ -99,7 +103,11 @@ def lane_parser(img: numpy.ndarray, lanes: int, groups: int,
     :rtype: list
     """
     final_data = []
-    for image in map(crop_to_lane, itertools.repeat(img), range(lanes), itertools.repeat(lanes)):
+    for image in map(
+            crop_to_lane,
+            itertools.repeat(img),
+            range(lanes),
+            itertools.repeat(lanes)):
         final_intensities = []
         for pixel in image:
             intensity = list(map(pixel_intensity, pixel))
@@ -121,7 +129,8 @@ def lane_parser(img: numpy.ndarray, lanes: int, groups: int,
         initial_peak = max(final_data[int(i * len(final_data) / groups)])
         peakzero_ys.append(initial_peak)
         for j in range(len(final_data[int(i * len(final_data) / groups)])):
-            if initial_peak == final_data[int(i * len(final_data) / groups)][j]:
+            if initial_peak == final_data[int(
+                    i * len(final_data) / groups)][j]:
                 peakzero_xs.append(j)
 
     all_bounds = []
@@ -132,9 +141,11 @@ def lane_parser(img: numpy.ndarray, lanes: int, groups: int,
         bounds = []
 
         for j in range(len(final_data[0])):
-            if final_data[int(i * len(final_data) / groups)][j] < tolerance * peak:
+            if final_data[int(i * len(final_data) / groups)
+                          ][j] < tolerance * peak:
                 continue
-            if final_data[int(i * len(final_data) / groups)][j] > tolerance * peak:
+            if final_data[int(i * len(final_data) / groups)
+                          ][j] > tolerance * peak:
                 bounds.append(j)
 
         lower_bound, upper_bound = bounds[0], bounds[-1]
@@ -155,8 +166,12 @@ def lane_parser(img: numpy.ndarray, lanes: int, groups: int,
     return final_data, all_bounds[0]
 
 
-def area_integrator(data: list, bounds: list, groups: int,
-                    show: bool = False, percentages: bool = True) -> numpy.ndarray:
+def area_integrator(
+        data: list,
+        bounds: list,
+        groups: int,
+        show: bool = False,
+        percentages: bool = True) -> numpy.ndarray:
     """Capture the peak areas as of the first band in each experiment.
 
     :param data: List of individual lanes RGB intensity data
@@ -291,8 +306,17 @@ def fancy_plotter(dataset, ks, errs, colors, fp: str = None, ylim=None,
 
     fig, ax = plt.subplots(1, 1, figsize=(len(dataset) / 1.6, 5))
 
-    ax.bar(numpy.arange(len(ks)), ks, yerr=[numpy.zeros(len(errs)), errs], color=colors,
-           edgecolor="black", capsize=7)
+    ax.bar(
+        numpy.arange(
+            len(ks)),
+        ks,
+        yerr=[
+            numpy.zeros(
+                len(errs)),
+            errs],
+        color=colors,
+        edgecolor="black",
+        capsize=7)
 
     labels = [i.split(".")[0] for i in dataset]
 
