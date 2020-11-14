@@ -93,11 +93,11 @@ def lane_parser(img: numpy.ndarray, lanes: int, groups: int,
     :type groups: int
     :param baseline: y-value of protein lane.
     :type baseline: list
-    :param tolerance: [description], defaults to 0.1
+    :param tolerance: Tolerance value, defaults to 0.1
     :type tolerance: float, optional
     :param show: Whether to show plot or not, defaults to False
     :type show: bool, optional
-    :return: [description]
+    :return: Return processed intensity data and bounds
     :rtype: list
     """
     final_data = []
@@ -169,7 +169,7 @@ def area_integrator(data: list, bounds: list, groups: int,
     :type show: bool, optional
     :param percentages: Whether to return peak areas as a percentage or not, defaults to True
     :type percentages: bool, optional
-    :return: [description]
+    :return: Sorted area
     :rtype: numpy.ndarray
     """
     baseline_xs, baseline_ys = [], []
