@@ -13,6 +13,11 @@ import scipy
 import scipy.stats
 import scipy.integrate
 
+args = {
+    "show": False,
+
+}
+
 
 def image_cropping(path, bbox, show=False):
     """Crop image in preparation for gel analysis.
@@ -25,8 +30,8 @@ def image_cropping(path, bbox, show=False):
     :param show: Whether or not to show original and cropped images with
         matplotlib, defaults to False.
     :type show: bool
-    :return: Cropped image as numpy.ndarray
-    :rtype: numpy.ndarray
+    :return: Cropped image as list
+    :rtype: list
     """
     original = PIL.Image.open(path)
     crop = original.crop(bbox)
@@ -48,16 +53,16 @@ def image_cropping(path, bbox, show=False):
 
 
 def crop_to_lane(obj, lane, lanes):
-    """Crop a numpy.ndarray to selected lane.
+    """Crop a list to selected lane.
 
     :param obj: Array to be cropped
-    :type obj: numpy.ndarray
+    :type obj: list
     :param lane: Selected lane
     :type lane: int
     :param lanes: Total lanes
     :type lanes: int
     :return: Return the cropped object representing lane data
-    :rtype: numpy.ndarray
+    :rtype: list
     """
     x_1 = int(len(obj[0]) * lane / lanes)
     x_2 = int(len(obj[0]) * (lane + 1) / lanes)
@@ -72,9 +77,9 @@ def pixel_intensity(pixel):
     """Calculate the RGB intensity of pixel value.
 
     :param obj: Pixel value
-    :type obj: numpy.ndarray
+    :type obj: list
     :return: Intensity value
-    :rtype: numpy.float64
+    :rtype: float
     """
     return 1 - (0.2126 * pixel[0] / 255 + 0.7152 *
                 pixel[1] / 255 + 0.0722 * pixel[2] / 255)
@@ -84,7 +89,7 @@ def lane_parser(img, lanes, groups, tolerance=0.1, show=False):
     """Gel images are parsed and each lane is converted into an array of pixel intensity.
 
     :param img: Image of gel with lanes and protein bands to be analysed
-    :type img: numpy.ndarray
+    :type img: list
     :param lanes: Amount of lanes in image
     :type lanes: int
     :param groups: Amount of different proteins
@@ -176,7 +181,7 @@ def area_integrator(data, bounds, groups, show=False, percentages=True):
     :param percentages: Whether to return peak areas as a percentage or not, defaults to True
     :type percentages: bool, optional
     :return: Sorted area
-    :rtype: numpy.ndarray
+    :rtype: list
     """
     baseline_xs, baseline_ys = [], []
     for element in data:
@@ -228,7 +233,7 @@ def summary_data(datasets, timepoints="", fp="", p_0=None, input_df=False):
     """Make a summeryplot from timepoints and RGB pixel intensity.
 
     :param datasets: RGB pixel intensity
-    :type datasets: numpy.ndarray
+    :type datasets: list
     :param timepoints: Timepoints to be used in summary, defaults to ""
     :type timepoints: str, optional
     :param fp: Filename for summary data image or json output, defaults to ""
@@ -293,7 +298,28 @@ def summary_data(datasets, timepoints="", fp="", p_0=None, input_df=False):
 
 def fancy_plotter(dataset, ks, errs, colors, fp=None,
                   ylim=None, ylabel=None, log=True, labeling=True):
-    """
+    """Make a fancy plot to represent the data.
+
+    :param dataset: Main data to be represented
+    :type dataset: list
+    :param ks: Calculated k data from dataset
+    :type ks: list
+    :param errs: Calculated error data from dataset
+    :type errs: list
+    :param colors: List of matplotlib color codes
+    :type colors: list
+    :param fp: Filepath to where the image is saved, defaults to None
+    :type fp: str, optional
+    :param ylim: Bounderies of y-axis, defaults to None
+    :type ylim: list, optional
+    :param ylabel: label on y-axis, defaults to None
+    :type ylabel: str, optional
+    :param log: Choose to use logaritmic y-scale or not, defaults to True
+    :type log: bool, optional
+    :param labeling: Choose to label or not, defaults to True
+    :type labeling: bool, optional
+    :return: Show the fancyplot or if filepath is provided saves the image
+    :rtype: None
     """
     fig, ax = plt.subplots(1, 1, figsize=(len(dataset) / 1.6, 5))
 
@@ -319,3 +345,94 @@ def fancy_plotter(dataset, ks, errs, colors, fp=None,
 
     if fp is not None:
         fig.savefig(fp, bbox_inches="tight", dpi=1000)
+
+
+def half_life_calculator(ks, errs):
+    """Calculate half-life from data.
+
+    :param ks: List of ks
+    :type ks: list
+    :param errs: List of errors
+    :type errs: list
+    :return: Return t's and t_err's of dataset
+    :rtype: list
+    """
+    ts = numpy.array([0.693 / k for k in ks]).flatten()
+
+    def func(k, err):
+        return numpy.sqrt((0.693 / k**2)**2 * err**2)
+
+    t_errs = numpy.array([func(k, err) for k, err in zip(ks, errs)]).flatten()
+
+    return ts, t_errs
+
+
+def aggregator(df, column=-1):
+    """Calculate the aggregator.
+
+    :param df: Dataframe
+    :type df: list
+    :param column: Choose column in df_list, defaults to -1
+    :type column: int, optional
+    :return: Return means and standard errors
+    :type: list
+    """
+    means = []
+    errors = []
+
+    for element in df:
+        means.append(numpy.mean(element[element.columns[column]]))
+        errors.append(numpy.std(element[element.columns[column]]) /
+                      numpy.sqrt(len(element[element.columns[column]])))
+
+    return means, errors
+
+
+def aggregate_plotter(data, errors, labels, colorlist,
+                      y_pos, ylabel, xlabel, figname, savefig=False):
+    """Create aggregator plot.
+
+    :param data: Data to be represented
+    :type data: list
+    :param errors: Calculated aggregator error from data
+    :type errors: list
+    :param labels: Labels for data
+    :type labels: list
+    :param colorlist: Colors to represent data
+    :type colorlist: list
+    :param y_pos: Position of y
+    :type y_pos: list
+    :param ylabel: Label of y-axis
+    :type ylabel: str
+    :param xlabel: Label of x-axis
+    :type xlabel: str
+    :param figname: Name/title of figure
+    :type figname: str
+    :param savefig: , default to
+    :type savefig: bool, optional
+    :return: Aggregator data in dataframe
+    :type: pandas.Dataframe
+    """
+    df = pandas.DataFrame({"data": data, "errors": errors})
+    df["labels"] = labels
+    df["colors"] = colorlist
+
+    plt.figure(figsize=(6, 4))
+    plt.bar(
+        y_pos,
+        df.data,
+        color=df.colors,
+        align='center',
+        yerr=df.errors,
+        width=0.75)
+    plt.xticks(range(len()))
+    plt.yticks(fontsize=16)
+    plt.ylabel(ylabel, fontsize=20)
+    plt.xlabel(xlabel, fontsize=20)
+    plt.ylim(0, 105)
+    plt.tight_layout()
+
+    if savefig == True:
+        plt.savefig(figname, dpi=300)
+
+    return df
