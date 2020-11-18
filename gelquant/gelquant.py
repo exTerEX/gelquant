@@ -432,7 +432,7 @@ def aggregate_plotter(data, errors, labels, colorlist,
     plt.ylim(0, 105)
     plt.tight_layout()
 
-    if savefig == True:
+    if savefig:
         plt.savefig(figname, dpi=300)
 
     return df
