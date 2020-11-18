@@ -14,10 +14,7 @@ import scipy.stats
 import scipy.integrate
 
 
-def image_cropping(
-        path: str,
-        bbox: tuple,
-        show: bool = False) -> numpy.ndarray:
+def image_cropping(path, bbox, show=False):
     """Crop image in preparation for gel analysis.
 
     :param path: Path to image that will be cropped.
@@ -50,7 +47,7 @@ def image_cropping(
     return numpy.array(crop)
 
 
-def crop_to_lane(obj: numpy.ndarray, lane: int, lanes: int) -> numpy.ndarray:
+def crop_to_lane(obj, lane, lanes):
     """Crop a numpy.ndarray to selected lane.
 
     :param obj: Array to be cropped
@@ -71,7 +68,7 @@ def crop_to_lane(obj: numpy.ndarray, lane: int, lanes: int) -> numpy.ndarray:
     return obj[y_1:y_2, x_1:x_2]
 
 
-def pixel_intensity(pixel: numpy.ndarray) -> numpy.float64:
+def pixel_intensity(pixel):
     """Calculate the RGB intensity of pixel value.
 
     :param obj: Pixel value
@@ -83,8 +80,7 @@ def pixel_intensity(pixel: numpy.ndarray) -> numpy.float64:
                 pixel[1] / 255 + 0.0722 * pixel[2] / 255)
 
 
-def lane_parser(img: numpy.ndarray, lanes: int, groups: int,
-                tolerance: float = 0.1, show: bool = False) -> list:
+def lane_parser(img, lanes, groups, tolerance=0.1, show=False):
     """Gel images are parsed and each lane is converted into an array of pixel intensity.
 
     :param img: Image of gel with lanes and protein bands to be analysed
@@ -166,12 +162,7 @@ def lane_parser(img: numpy.ndarray, lanes: int, groups: int,
     return final_data, all_bounds[0]
 
 
-def area_integrator(
-        data: list,
-        bounds: list,
-        groups: int,
-        show: bool = False,
-        percentages: bool = True) -> numpy.ndarray:
+def area_integrator(data, bounds, groups, show=False, percentages=True):
     """Capture the peak areas as of the first band in each experiment.
 
     :param data: List of individual lanes RGB intensity data
@@ -233,8 +224,7 @@ def area_integrator(
     return sorted_areas
 
 
-def summary_data(datasets: numpy.ndarray, timepoints: str = "", fp: str = "",
-                 p_0: list = None, input_df: bool = False) -> None:
+def summary_data(datasets, timepoints="", fp="", p_0=None, input_df=False):
     """Make a summeryplot from timepoints and RGB pixel intensity.
 
     :param datasets: RGB pixel intensity
@@ -301,27 +291,19 @@ def summary_data(datasets: numpy.ndarray, timepoints: str = "", fp: str = "",
     return popt, perr
 
 
-def fancy_plotter(dataset, ks, errs, colors, fp: str = None, ylim=None,
-                  ylabel=None, log=True, labeling=True):
-
+def fancy_plotter(dataset, ks, errs, colors, fp=None,
+                  ylim=None, ylabel=None, log=True, labeling=True):
+    """
+    """
     fig, ax = plt.subplots(1, 1, figsize=(len(dataset) / 1.6, 5))
 
-    ax.bar(
-        numpy.arange(
-            len(ks)),
-        ks,
-        yerr=[
-            numpy.zeros(
-                len(errs)),
-            errs],
-        color=colors,
-        edgecolor="black",
-        capsize=7)
+    ax.bar(numpy.arange(len(ks)), ks, yerr=[numpy.zeros(
+        len(errs)), errs], color=colors, edgecolor="black", capsize=7)
 
     labels = [i.split(".")[0] for i in dataset]
 
     if log:
-        ax.set_yscale('log')
+        ax.set_yscale("log")
 
     ax.set_ylim(ylim)
 
