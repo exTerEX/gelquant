@@ -3,6 +3,7 @@
 # Standard Python Modules
 import decimal
 import itertools
+import os
 
 # Third Party Python Modules
 import matplotlib.pyplot as plt
@@ -436,3 +437,5 @@ def aggregate_plotter(data, errors, labels, colorlist,
         plt.savefig(figname, dpi=300)
 
     return df
+
+__version__ = "0.1.1"
