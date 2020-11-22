@@ -438,4 +438,5 @@ def aggregate_plotter(data, errors, labels, colorlist,
 
     return df
 
+
 __version__ = "0.1.1"
