@@ -9,18 +9,15 @@ import os
 import matplotlib.pyplot as plt
 import numpy
 import PIL.Image
+from numpy.core.numeric import True_
 import pandas
 import scipy
 import scipy.stats
 import scipy.integrate
-
-args = {
-    "show": False,
-
-}
+import scipy.optimize
 
 
-def image_cropping(path, bbox, show=False):
+def image_cropping(path, bbox, **kwargs):
     """Crop image in preparation for gel analysis.
 
     :param path: Path to image that will be cropped.
@@ -37,18 +34,21 @@ def image_cropping(path, bbox, show=False):
     original = PIL.Image.open(path)
     crop = original.crop(bbox)
 
-    if show:
-        plt.figure(figsize=(7, 14))
-        plt.subplot(121)
-        plt.imshow(original)
-        plt.title("original image")
+    try:
+        if kwargs["show"]:
+            plt.figure(figsize=(7, 14))
+            plt.subplot(121)
+            plt.imshow(original)
+            plt.title("original image")
 
-        plt.subplot(122)
-        plt.imshow(crop)
-        plt.title("cropped image")
+            plt.subplot(122)
+            plt.imshow(crop)
+            plt.title("cropped image")
 
-        plt.tight_layout()
-        plt.show()
+            plt.tight_layout()
+            plt.show()
+    except KeyError:
+        pass
 
     return numpy.array(crop)
 
@@ -86,7 +86,7 @@ def pixel_intensity(pixel):
                 pixel[1] / 255 + 0.0722 * pixel[2] / 255)
 
 
-def lane_parser(img, lanes, groups, tolerance=0.1, show=False):
+def lane_parser(img, lanes, groups, **kwargs):
     """Gel images are parsed and each lane is converted into an array of pixel intensity.
 
     :param img: Image of gel with lanes and protein bands to be analysed
@@ -137,6 +137,11 @@ def lane_parser(img, lanes, groups, tolerance=0.1, show=False):
 
     all_bounds = []
 
+    try:
+        tolerance = kwargs["tolerance"]
+    except KeyError:
+        tolerance = 0.1
+
     for i in range(groups):
 
         peak = peakzero_ys[i]
@@ -155,20 +160,23 @@ def lane_parser(img, lanes, groups, tolerance=0.1, show=False):
         for k in range(int(len(final_data) / groups)):
             all_bounds.append([lower_bound, upper_bound])
 
-    if show:
-        for i, element in enumerate(final_data):
-            plt.plot(numpy.arange(len(element)), element, "-")
-            plt.plot([all_bounds[0], all_bounds[0]],
-                     [-0.1, 0.7], "--", color="green")
-            plt.plot([all_bounds[1], all_bounds[1]],
-                     [-0.1, 0.7], "--", color="green")
-            plt.ylim(-0.1, 0.7)
-            plt.show()
+    try:
+        if kwargs["show"]:
+            for i, element in enumerate(final_data):
+                plt.plot(numpy.arange(len(element)), element, "-")
+                plt.plot([all_bounds[0], all_bounds[0]],
+                         [-0.1, 0.7], "--", color="green")
+                plt.plot([all_bounds[1], all_bounds[1]],
+                         [-0.1, 0.7], "--", color="green")
+                plt.ylim(-0.1, 0.7)
+                plt.show()
+    except KeyError:
+        pass
 
     return final_data, all_bounds[0]
 
 
-def area_integrator(data, bounds, groups, show=False, percentages=True):
+def area_integrator(data, bounds, groups, **kwargs):
     """Capture the peak areas as of the first band in each experiment.
 
     :param data: List of individual lanes RGB intensity data
@@ -179,7 +187,8 @@ def area_integrator(data, bounds, groups, show=False, percentages=True):
     :type groups: int
     :param show: Whether to show plot or not, defaults to False
     :type show: bool, optional
-    :param percentages: Whether to return peak areas as a percentage or not, defaults to True
+    :param percentages: Whether to return peak areas as a percentage or not,
+    defaults to True
     :type percentages: bool, optional
     :return: Sorted area
     :rtype: list
@@ -202,14 +211,19 @@ def area_integrator(data, bounds, groups, show=False, percentages=True):
         baseline_xs.append(baseline_x)
         baseline_ys.append(baseline_y)
 
-    if show:
-        for i, element in enumerate(data):
-            plt.plot(numpy.arange(len(element)), element, "-")
-            plt.plot([bounds[0], bounds[0]], [-0.1, 0.7], "--", color="green")
-            plt.plot([bounds[1], bounds[1]], [-0.1, 0.7], "--", color="green")
-            plt.plot(baseline_xs[i], baseline_ys[i], "--", color="green")
-            plt.ylim(-0.1, 0.7)
-            plt.show()
+    try:
+        if kwargs["show"]:
+            for i, element in enumerate(data):
+                plt.plot(numpy.arange(len(element)), element, "-")
+                plt.plot([bounds[0], bounds[0]],
+                         [-0.1, 0.7], "--", color="green")
+                plt.plot([bounds[1], bounds[1]],
+                         [-0.1, 0.7], "--", color="green")
+                plt.plot(baseline_xs[i], baseline_ys[i], "--", color="green")
+                plt.ylim(-0.1, 0.7)
+                plt.show()
+    except KeyError:
+        pass
 
     trunc_data = [element[bounds[0]:bounds[1]] - baseline_ys[i]
                   for i, element in enumerate(data)]
@@ -224,8 +238,11 @@ def area_integrator(data, bounds, groups, show=False, percentages=True):
 
     sorted_areas = [item for sublist in sorted_areas for item in sublist]
 
-    if percentages:
-        return sorted_areas / sorted_areas[0]
+    try:
+        if kwargs["percentages"]:
+            return sorted_areas / sorted_areas[0]
+    except KeyError:
+        pass
 
     return sorted_areas
 
@@ -437,5 +454,6 @@ def aggregate_plotter(data, errors, labels, colorlist,
         plt.savefig(figname, dpi=300)
 
     return df
+
 
 __version__ = "0.1.1"
