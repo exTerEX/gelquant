@@ -1,0 +1,12 @@
+--requirement requirements.txt
+
+pydocstyle
+pytest
+pytest-pycodestyle
+pycodestyle
+pytest-monitor
+pre-commit
+pytest-pydocstyle
+pytest-cov
+pytest-leaks
+bandit
